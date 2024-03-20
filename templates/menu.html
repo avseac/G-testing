@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html data-theme="light">
+	<head>
+		{{ template "head" . }}
+	</head>
+	<body class="min-h-screen">
+		<div class="p-2" id="container">
+			<div class="mb-5">
+				<img class="inline" src="/static/logo.png" width="150"/>
+				<span class="text-3xl text-accent font-bold">Ristorante Alpi</span>
+			</div>
+			<div class="absolute top-5 right-4 text-center">
+				{{ .today }}
+			</div>
+			<div class="flex flex-wrap justify-evenly items-start">
+				{{ range $Category := .data }}
+					<div class="my-5 mx-3 min-w-fit">
+						<div class="text-2xl font-bold tracking-wide">
+							<div class="divider divider-accent italic font-mono">{{ $Category.Name }}</div>
+						</div>
+						<table class="w-80">
+							<tbody>
+								{{ range $Product := $Category.Products }}
+									<tr>
+										<td class="text-left pl-4 pr-5 w-auto">{{ $Product.Name }}</td>
+										<td class="text-right pr-4 w-auto text-nowrap">{{ $Product.Price }}€</td>
+									</tr>
+								{{ end }}
+							</tbody>
+						</table>
+					</div>
+				{{ end }}
+			</div>
+		</div>
+	</body>	
+</html>

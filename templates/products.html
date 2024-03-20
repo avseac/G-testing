@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html data-theme="light">
+	<head>
+		{{ template "head" . }}
+	</head>
+	<body class="min-h-screen">
+		
+		<div class="absolute top-1/2 left-1/2 -translate-x-1/2 p-5 -translate-y-1/2 lg:w-[80%] md:w-[100%]">
+			<table class="w-full">
+				<tbody>
+					{{ range $row := .data }}
+						<tr>
+							<td>
+								{{ if $row.Visible }}
+									<input id="row-checkbox-{{ $row.Id }}"type="checkbox" checked>
+								{{ else }}
+									<input id="row-checkbox-{{ $row.Id }}"type="checkbox">
+								{{ end }}
+							</td>
+							<td>
+								<label for="row-checkbox-{{ $row.Id }}">{{ $row.Name }}</label>
+							</td>
+							<td>{{ $row.Price }}</td>
+							<td>➕</td>
+							<td>❌</td>
+						</tr>
+					{{ end }}
+				</tbody>
+				<tfoot>
+					<tr>
+						<td class="float-right" colspan="2">
+							Pagination:
+						</td>
+					</tr>
+				</tfoot>
+			</table>
+		</div>
+
+	</body>
+</html>
