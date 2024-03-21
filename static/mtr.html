@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Menu | V4</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta charset="UTF-8">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+		<link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+		<link href="public/loader.css" ref="stylesheet"/>
+		<style>
+			@media print {
+				@page {
+					margin: 0;
+				}
+			}
+
+			* {
+				--a: 51.51% 0.21 26.450;
+				--bg-base-100: 43.13% 0.00 0;
+				font-family: "Work sans", sans-serif;
+				font-weight: 400;
+				font-style: normal;
+			}
+
+			.divider-accent:before, .divider-accent:after {
+				background-color: unset;
+				border: 1px solid var(--fallback-a,oklch(var(--a)/var(--tw-bg-opacity)));
+			}
+
+			#loader, #container {
+				transition: opacity 500ms;
+			}
+
+			td.allergeni::before {
+				content: 'Allergeni: ';
+			}
+			td.allergeni:empty {
+				display: none;
+			}
+
+
+
+		</style>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script>
+			window.menu = { data: undefined, html: undefined };
+
+			function tsvParser(tsv) {
+				const rows = tsv.replaceAll('\r', '').split('\n');
+				const headers = rows[0].split('\t');
+				const body = rows.splice(1);
+				const menu = Object.groupBy(body.map(item => item.split('\t').reduce((prev, curr, idx) => (prev[headers[idx]] = curr, prev), {}))
+					.filter(item => item.Visualizza == 'TRUE'), ({ Categoria }) => Categoria);
+				const menuOrder = ['Primo', 'Secondo', 'Contorno', 'Frutta', 'Dolce'];
+				return Object.fromEntries(Object.entries(menu).sort((a, b) => menuOrder.indexOf(a[0]) - menuOrder.indexOf(b[0])))
+			}
+
+			function html(strings, ...args) {
+				const parser = (item) => {
+					return (item.constructor.name === 'Array')
+						? item.join('')
+						: (item.constructor.name === 'Object')
+							? JSON.stringify(item)
+							: item;
+				}
+				return strings.reduce((prev, curr, i) => prev + parser(args[i - 1] || '') + curr, '');
+			}
+
+
+			async function updater(cb) {
+				const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQdpCKseE7j7xjzlB4lCr9RuwHFdLVlX4Q4xrAMzgPE4AaOLS9XJTi3WMwkRbs44VV31E0Kat0dOg7m/pub?gid=0&single=true&output=tsv';
+				const response = await fetch(url);
+				const data = await response.text();
+			
+				const parsedData = tsvParser(data);
+			
+				if (window.menu.data != parsedData) {
+					window.menu.data = parsedData;
+				
+					cb(parsedData, '#container');
+				}
+				setTimeout(updater, 1000 * 60, cb)
+			};
+
+			function getRandomNumber(min, max) {
+				return Math.floor(Math.random() * (max - min + 1) + min);
+			}
+			
+			function getCurrentDay() {
+				const d = new Date();
+				const cd = d.getDate()
+				const cm = d.getMonth() + 1;
+				const cy = d.getFullYear();
+				return [
+					cd,
+					cm,
+					cy
+				].map(i => i.toString().padStart(2, '0')).join('/')
+			}
+			
+			function randomData(type) {
+				switch(type) {
+					case 'price':
+						const min = 1;
+						const max = 9;
+						return (Math.floor((Math.random() * (max - min + 1) + min)*1e2)/1e2).toString().padEnd(4, '0');
+					case 'allergeni':
+						const listOfAllergeni = [ 'glutine', 'crostacei', 'uova', 'pesce', 'arachidi', 'soia', 'latte', 'frutta a guscio', 'sedano', 'senape', 'sesamo', 'anidride solforosa', 'lupini', 'molluschi' ];
+						const nOfAllergni = getRandomNumber(0, 2);
+						const allergeni = [...new Array(nOfAllergni)].map((_ => listOfAllergeni.splice(Math.floor(Math.random() * listOfAllergeni.length), 1)))
+						return allergeni.join(', ')
+					default:
+						return '';
+				}
+			}
+		</script>
+		<script type="module">
+
+			function populateContainer(data) {
+				const parent = document.querySelector('#container');
+
+				parent.innerHTML = window.menu.html = html`
+					<div class="mb-5">
+						<img class="inline" src="/static/logo.png" width="150"/>
+						<span class="text-3xl text-accent font-bold">Ristorante Alpi</span>
+					</div>
+					<div class="absolute top-5 right-4 text-center">${getCurrentDay()}</div>
+					<div class="flex flex-wrap justify-evenly items-start">
+						${Object.entries(data).map(([category, items], idx) => html`
+							<div class="my-5 mx-3 min-w-fit">
+								<div class="text-2xl font-bold tracking-wide">
+									<div class="divider divider-accent italic font-mono">${category}</div>
+								</div>
+								<table class="w-80">
+									<tbody>
+										${items.map(item => html`
+											<tr>
+												<td class="text-left pl-4 pr-5 w-auto">${item.Piatto}</td>
+												<td class="text-right pr-4 w-auto text-nowrap">${item.Prezzo || (idx == 0) ? randomData('price') : '-'}€</td>
+											</tr>
+											<tr>
+												<td colspan="2" class="allergeni text-xs text-left pl-8 italic">
+													${item.Allergeni || (idx == 0) ? randomData('allergeni') : ''}
+												</td>
+											</tr>
+										`)}
+									</tbody>
+								</table>
+							</div>
+						`)}
+					</div>
+				`.replaceAll(/[\n\t]*/g, '');
+				document.querySelector('#loader').classList.add('opacity-0');
+				setTimeout(() => { parent.classList.add('opacity-100') }, 100);
+			}
+
+			updater(populateContainer);
+		</script>
+	</head>
+	<body class="min-h-screen" data-theme="light">
+		<div class="p-2 opacity-0" id="container"></div>
+		<span class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 loading loading-infinity w-14" id="loader"></span>
+		<!-- <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 loader" id="loader">a</div> -->
+	</body>
+</html>

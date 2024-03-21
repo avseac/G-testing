@@ -15,3 +15,10 @@ func ServeProducts(c *gin.Context) {
 		"data":  api.DataProductList,
 	})
 }
+
+func ServeProductsForOrder(c *gin.Context) {
+	c.HTML(http.StatusOK, "order.html", gin.H{
+		"title": "Order",
+		"data":  api.DataProductList,
+	})
+}
